@@ -36,7 +36,7 @@ export const StatusBar = props => {
                     'Last synced at ' +
                     new Date(state.lastSync).toLocaleTimeString()
                   }
-                  href="javascript:void(0)">
+                  tabIndex={-1}>
                   <svg
                     className="fill-current w-4 h-4"
                     xmlns="http://www.w3.org/2000/svg"
@@ -51,7 +51,8 @@ export const StatusBar = props => {
               ) : null}
               <a
                 className="hidden flex items-center hover:text-gray-700 ml-4"
-                href="javascript:void(0)">
+                tabIndex={-1}
+                href="">
                 <svg
                   className="fill-current w-4 h-4"
                   xmlns="http://www.w3.org/2000/svg"
@@ -63,6 +64,7 @@ export const StatusBar = props => {
               <a
                 className="block flex items-center hover:text-gray-700 ml-4"
                 title={'Source code'}
+                tabIndex={-1}
                 target={'_blank'}
                 rel={'nofollow'}
                 href="https://github.com/huytd/pomoday-v2">
@@ -77,6 +79,7 @@ export const StatusBar = props => {
               <a
                 className="block flex items-center hover:text-gray-700 ml-4"
                 title={'Help'}
+                tabIndex={-1}
                 target={'_blank'}
                 rel={'nofollow'}
                 href="https://github.com/huytd/pomoday-v2/wiki">
@@ -92,6 +95,7 @@ export const StatusBar = props => {
                 className="block flex items-center hover:text-gray-700 ml-4"
                 title={'Report a bug'}
                 target={'_blank'}
+                tabIndex={-1}
                 rel={'nofollow'}
                 href="https://github.com/huytd/pomoday-v2/issues/new">
                 <svg
@@ -109,6 +113,7 @@ export const StatusBar = props => {
               <a
                 className="flex items-center hover:text-gray-700 cursor-pointer ml-4"
                 title={'Setting'}
+                tabIndex={-1}
                 onClick={() => {
                   setState({
                     ...state,
