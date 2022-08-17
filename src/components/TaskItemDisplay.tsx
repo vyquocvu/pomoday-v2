@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { TimeSpent } from './TimeSpent';
 import { getStatus, taskAsString, TaskStatus } from '../helpers/utils';
+import handelFocus from '../helpers/useFocus';
 
 export const TaskItemDisplay = props => {
   const task = props.task;
@@ -12,7 +13,7 @@ export const TaskItemDisplay = props => {
       </div>
       <div className="el-task-content pt-1 self-center flex-1 text-left">
         <span className={`task-content inline-block relative pl-5`}>
-          <span
+          <a
             className={
               task.status === TaskStatus.DONE
                 ? 'el-task-done inline-block text-stall-light line-through'
@@ -23,6 +24,10 @@ export const TaskItemDisplay = props => {
                 getStatus(task.status, true) +
                 taskAsString(task.title, matching),
             }}
+            href=""
+            onFocus={e => handelFocus(task.id)}
+            onBlur={e => handelFocus(null)}
+            onClick={e => e.preventDefault()}
           />
         </span>{' '}
         <TimeSpent task={task} />

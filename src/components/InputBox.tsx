@@ -38,6 +38,7 @@ import {
   tagRenameCommand,
 } from '../helpers/commands/actions';
 import { useEventListener } from '../helpers/hooks';
+import { commonStore } from '../anyState';
 
 export const InputBox = props => {
   const inputRef = React.useRef(null);
@@ -264,8 +265,9 @@ export const InputBox = props => {
         let c = String.fromCharCode(event.keyCode).toLowerCase();
         if (event.shiftKey) c = c.toUpperCase();
         // For special commands, insert the space afterward
-        const specialCommands = 'bcde';
-        if (specialCommands.indexOf(c) !== -1) c += ' ';
+        const specialCommands = 'bcdea';
+        const taskId = commonStore.getItem('focusingTask');
+        if (specialCommands.indexOf(c) !== -1) c += ' ' + taskId;
         openInput(event.shiftKey, false, c);
       }
     }

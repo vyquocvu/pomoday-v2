@@ -83,7 +83,7 @@ input:focus {
 }
 
 .row {
-  a {
+  a:not(.el-task-normal, .el-task-done) {
     @apply text-tomato;
   }
 }
