@@ -955,6 +955,11 @@ anymatch@~3.1.1:
     normalize-path "^3.0.0"
     picomatch "^2.0.4"
 
+anystate@^0.0.2-a:
+  version "0.0.2-a"
+  resolved "https://registry.yarnpkg.com/anystate/-/anystate-0.0.2-a.tgz#dda74b4628b305bb8b924cf5438649c7fc2e5b43"
+  integrity sha512-fnX4VQxQ280fERa9Irqmp9Is6or7QTtbaM+LD2w8xHIMW5hxz0q8Q+TWpHaIutI5PMb/0P+PPqpiS+25/R5sdw==
+
 aproba@^1.0.3:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/aproba/-/aproba-1.2.0.tgz#6802e6264efd18c790a1b0d517f0f2627bf2c94a"
