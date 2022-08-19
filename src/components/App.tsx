@@ -22,6 +22,7 @@ import { StatusBar } from './StatusBar';
 import { QuickHelp } from './QuickHelp';
 import { useEventListener, useInterval } from '../helpers/hooks';
 import { Settings } from './Settings';
+import { commonStore } from '../anyState';
 
 export const StateContext = React.createContext<any>(null);
 
@@ -173,6 +174,7 @@ const syncTasks = async (state, setState, isPull) => {
 
 export const App = () => {
   const [state, setState] = React.useState(getInitialState());
+  const [isHoldingAlt, setIsHoldingAlt] = React.useState(false);
   const mainViewRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -288,9 +290,28 @@ export const App = () => {
     );
   };
 
+  const handleReorder = (taskId, direction) => {
+    if (!taskId) return;
+    state.tasks.forEach((t, i) => {
+      if (t.id === Number(taskId)) {
+        console.log(i, direction);
+        const newIndex = i + direction;
+        if (newIndex >= 0 && newIndex < state.tasks.length) {
+          const newTask = state.tasks[newIndex];
+          state.tasks[newIndex] = t;
+          state.tasks[i] = newTask;
+        }
+      }
+    });
+    setState({ ...state, tasks: state.tasks });
+  };
+
   const processHotKey = e => {
     if (mainViewRef && mainViewRef.current) {
-      if (!document.activeElement.tagName.match(/body/i)) return;
+      if (!document.activeElement.tagName.match(/(body)|A/i)) return;
+      if (e.key === 'Alt') {
+        setIsHoldingAlt(true);
+      }
       if (
         state.showSettings ||
         state.showHelp ||
@@ -298,6 +319,8 @@ export const App = () => {
         (state.userWantToLogin && !state.authToken)
       )
         return;
+
+      const taskId = commonStore.getItem('focusingTask');
       switch (e.key) {
         case 'Escape':
           if (state.filterBy) {
@@ -309,11 +332,21 @@ export const App = () => {
           break;
         case 'j':
         case 'ArrowDown':
-          mainViewRef.current.scroll(0, mainViewRef.current.scrollTop + 100);
+          if (taskId && isHoldingAlt) {
+            handleReorder(taskId, 1);
+            e.preventDefault();
+          } else {
+            mainViewRef.current.scroll(0, mainViewRef.current.scrollTop + 100);
+          }
           break;
         case 'k':
         case 'ArrowUp':
-          mainViewRef.current.scroll(0, mainViewRef.current.scrollTop - 100);
+          if (taskId && isHoldingAlt) {
+            handleReorder(taskId, -1);
+            e.preventDefault();
+          } else {
+            mainViewRef.current.scroll(0, mainViewRef.current.scrollTop - 100);
+          }
           break;
         default:
           break;
@@ -322,6 +355,11 @@ export const App = () => {
   };
 
   useEventListener('keydown', processHotKey);
+  useEventListener('keyup', e => {
+    if (e.key === 'Alt') setIsHoldingAlt(false);
+  });
+
+  console.log('re-render', state.tasks.map(t => t.id).join(','));
 
   return (
     <StateContext.Provider value={[state, setState]}>
