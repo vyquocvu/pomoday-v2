@@ -38,6 +38,7 @@ import {
   tagRenameCommand,
 } from '../helpers/commands/actions';
 import { useEventListener } from '../helpers/hooks';
+import { commonStore } from '../anyState';
 
 export const InputBox = props => {
   const inputRef = React.useRef(null);
@@ -45,6 +46,7 @@ export const InputBox = props => {
   const [state, setState] = React.useContext(StateContext);
   const [isVisible, setVisible] = React.useState(false);
   const [isFullEditor, setFullEditor] = React.useState(false);
+  const [latestKey, setLatestKey] = React.useState('');
   let historyIndex = -1;
   const history: Queue<string> = getHistoryQueue(state.history);
   let suggestion = '';
@@ -241,6 +243,7 @@ export const InputBox = props => {
   };
 
   const focusInput = event => {
+    setLatestKey(event.key);
     if (
       state.showHelp ||
       state.showQuickHelp ||
@@ -262,8 +265,13 @@ export const InputBox = props => {
         let c = String.fromCharCode(event.keyCode).toLowerCase();
         if (event.shiftKey) c = c.toUpperCase();
         // For special commands, insert the space afterward
-        const specialCommands = 'bcde';
-        if (specialCommands.indexOf(c) !== -1) c += ' ';
+        const specialCommands = 'bcdea';
+        const taskId = commonStore.getItem('focusingTask');
+        if (specialCommands.indexOf(c) !== -1) {
+          c += ' ' + taskId;
+        } else {
+          c = '';
+        }
         openInput(event.shiftKey, false, c);
       }
     }
@@ -274,15 +282,25 @@ export const InputBox = props => {
 
   useEventListener('keyup', focusInput);
 
-  return isVisible || state.settings.stickyInput ? (
-    <div
-      className={`${
-        !state.settings.stickyInput
-          ? 'absolute top-0 right-0 bottom-0 left-0'
-          : ''
-      } flex items-center justify-center`}>
-      <div
-        className={`el-editor bg-control2nd border-stall-light border
+  return (
+    <>
+      <div className={'fixed bottom-0 left-0 m-5'}>
+        <span
+          className={`hidden min-w-10 h-9 ${
+            latestKey ? 'sm:block' : ''
+          } bg-white px-3 py-2 rounded-lg shadow-lg mr-2 `}>
+          {latestKey}
+        </span>
+      </div>
+      {isVisible || state.settings.stickyInput ? (
+        <div
+          className={`${
+            !state.settings.stickyInput
+              ? 'absolute top-0 right-0 bottom-0 left-0'
+              : ''
+          } flex items-center justify-center`}>
+          <div
+            className={`el-editor bg-control2nd border-stall-light border
         ${
           !state.settings.stickyInput
             ? 'w-9/12 sm:w-7/12 md:w-5-12 rounded-lg shadow-lg'
@@ -298,164 +316,170 @@ export const InputBox = props => {
             : 'h-12 mb-64'
         }
         relative overflow-hidden`}>
-        <textarea
-          ref={inputRef}
-          className={`bg-transparent text-foreground w-full h-full p-3 px-4 absolute top-0 left-0 z-10 resize-none ${
-            state.settings.stickyInput
-              ? 'border-l-4 border-transparent focus:border-green'
-              : ''
-          }`}
-          tabIndex={0}
-          autoFocus={true}
-          onKeyPress={processInput}
-          onKeyUp={processInput}
-          onKeyDown={onKeyDown}
-          placeholder="Type anything here..."
-        />
-        <textarea
-          ref={suggestRef}
-          className={`bg-transparent text-foreground w-full h-full p-3 px-4 absolute top-0 left-0 z-0 pointer-events-none resize-none opacity-25 ${
-            state.settings.stickyInput
-              ? 'border-l-4 border-transparent focus:border-green'
-              : ''
-          }`}
-          disabled={true}
-          value={''}
-        />
-      </div>
-      <div
-        className={
-          'block sm:hidden fixed bottom-0 right-0 sm:right-auto sm:left-0 m-5'
-        }>
-        <button
-          onClick={hideInput}
-          className={
-            'sm:hidden text-3xl bg-tomato text-white rounded-full shadow-lg w-16 h-16'
-          }>
-          ✕
-        </button>
-      </div>
-      <div className={'fixed bottom-0 right-0 m-5'}>
-        {isFullEditor ? (
+            <textarea
+              ref={inputRef}
+              className={`bg-transparent text-foreground w-full h-full p-3 px-4 absolute top-0 left-0 z-10 resize-none ${
+                state.settings.stickyInput
+                  ? 'border-l-4 border-transparent focus:border-green'
+                  : ''
+              }`}
+              tabIndex={0}
+              autoFocus={true}
+              onKeyPress={processInput}
+              onKeyUp={processInput}
+              onKeyDown={onKeyDown}
+              placeholder="Type anything here..."
+            />
+            <textarea
+              ref={suggestRef}
+              className={`bg-transparent text-foreground w-full h-full p-3 px-4 absolute top-0 left-0 z-0 pointer-events-none resize-none opacity-25 ${
+                state.settings.stickyInput
+                  ? 'border-l-4 border-transparent focus:border-green'
+                  : ''
+              }`}
+              disabled={true}
+              value={''}
+            />
+          </div>
+          <div
+            className={
+              'block sm:hidden fixed bottom-0 right-0 sm:right-auto sm:left-0 m-5'
+            }>
+            <button
+              onClick={hideInput}
+              className={
+                'sm:hidden text-3xl bg-tomato text-white rounded-full shadow-lg w-16 h-16'
+              }>
+              ✕
+            </button>
+          </div>
+          <div className={'fixed bottom-0 right-0 m-5'}>
+            {isFullEditor ? (
+              <span
+                className={
+                  'hidden sm:block bg-white px-3 py-2 rounded-lg shadow-lg'
+                }>
+                Press <code>Enter</code> for new line. <code>Ctrl + Enter</code>{' '}
+                for submit.
+              </span>
+            ) : state.settings.hintPopup ? (
+              <span
+                className={`hidden sm:block bg-white px-3 py-2 rounded-lg shadow-lg ${
+                  state.settings.stickyInput ? 'mb-10' : ''
+                }`}>
+                <p>
+                  <b>
+                    <u>/</u>:
+                  </b>{' '}
+                  search for anything
+                </p>
+                <p>
+                  <b>
+                    <u>t</u>ask:
+                  </b>{' '}
+                  create a new task
+                </p>
+                <p>
+                  <b>
+                    <u>b</u>egin:
+                  </b>{' '}
+                  start timer
+                </p>
+                <p>
+                  <b>
+                    <u>st</u>op:
+                  </b>{' '}
+                  stop timer
+                </p>
+                <p>
+                  <b>
+                    <u>fl</u>ag:
+                  </b>{' '}
+                  flag a task
+                </p>
+                <p>
+                  <b>
+                    <u>e</u>dit:
+                  </b>{' '}
+                  edit a task
+                </p>
+                <p>
+                  <b>
+                    <u>move</u>:
+                  </b>{' '}
+                  move task to another tag
+                </p>
+                <p>
+                  <b>
+                    <u>d</u>elete:
+                  </b>{' '}
+                  delete task
+                </p>
+                <p>
+                  <b>
+                    <u>a</u>rchive:
+                  </b>{' '}
+                  archive a task
+                </p>
+                <p>
+                  <b>
+                    <u>re</u>store:
+                  </b>{' '}
+                  unarchive a task
+                </p>
+                <p>
+                  <b>
+                    <u>sw</u>itch:
+                  </b>{' '}
+                  switch the working task
+                </p>
+                <p>
+                  <b>
+                    <u>list-archived</u>:
+                  </b>{' '}
+                  show archived tasks
+                </p>
+                <p>
+                  <b>
+                    <u>today</u>:
+                  </b>{' '}
+                  show today overview
+                </p>
+                <p>
+                  <b>
+                    <u>customize</u>:
+                  </b>{' '}
+                  show CSS editor
+                </p>
+                <p>
+                  <b>
+                    <u>help</u>:
+                  </b>{' '}
+                  show help page
+                </p>
+              </span>
+            ) : null}
+          </div>
+        </div>
+      ) : state.showQuickHelp || state.showHelp ? null : (
+        <div className={'fixed bottom-0 right-0 m-5'}>
           <span
             className={
               'hidden sm:block bg-white px-3 py-2 rounded-lg shadow-lg'
             }>
-            Press <code>Enter</code> for new line. <code>Ctrl + Enter</code> for
-            submit.
+            Type anything, or press <code>/</code> to search. <br />
+            Tab to select Task <br />→ <code>Alt + Arrow Up/Down</code> to move
+            task
           </span>
-        ) : state.settings.hintPopup ? (
-          <span
-            className={`hidden sm:block bg-white px-3 py-2 rounded-lg shadow-lg ${
-              state.settings.stickyInput ? 'mb-10' : ''
-            }`}>
-            <p>
-              <b>
-                <u>/</u>:
-              </b>{' '}
-              search for anything
-            </p>
-            <p>
-              <b>
-                <u>t</u>ask:
-              </b>{' '}
-              create a new task
-            </p>
-            <p>
-              <b>
-                <u>b</u>egin:
-              </b>{' '}
-              start timer
-            </p>
-            <p>
-              <b>
-                <u>st</u>op:
-              </b>{' '}
-              stop timer
-            </p>
-            <p>
-              <b>
-                <u>fl</u>ag:
-              </b>{' '}
-              flag a task
-            </p>
-            <p>
-              <b>
-                <u>e</u>dit:
-              </b>{' '}
-              edit a task
-            </p>
-            <p>
-              <b>
-                <u>move</u>:
-              </b>{' '}
-              move task to another tag
-            </p>
-            <p>
-              <b>
-                <u>d</u>elete:
-              </b>{' '}
-              delete task
-            </p>
-            <p>
-              <b>
-                <u>a</u>rchive:
-              </b>{' '}
-              archive a task
-            </p>
-            <p>
-              <b>
-                <u>re</u>store:
-              </b>{' '}
-              unarchive a task
-            </p>
-            <p>
-              <b>
-                <u>sw</u>itch:
-              </b>{' '}
-              switch the working task
-            </p>
-            <p>
-              <b>
-                <u>list-archived</u>:
-              </b>{' '}
-              show archived tasks
-            </p>
-            <p>
-              <b>
-                <u>today</u>:
-              </b>{' '}
-              show today overview
-            </p>
-            <p>
-              <b>
-                <u>customize</u>:
-              </b>{' '}
-              show CSS editor
-            </p>
-            <p>
-              <b>
-                <u>help</u>:
-              </b>{' '}
-              show help page
-            </p>
-          </span>
-        ) : null}
-      </div>
-    </div>
-  ) : state.showQuickHelp || state.showHelp ? null : (
-    <div className={'fixed bottom-0 right-0 m-5'}>
-      <span
-        className={'hidden sm:block bg-white px-3 py-2 rounded-lg shadow-lg'}>
-        Type anything, or press <code>/</code> to search.
-      </span>
-      <button
-        onClick={openInput.bind(this.false, this.false)}
-        className={
-          'sm:hidden text-5xl bg-green text-white rounded-full shadow-lg w-16 h-16'
-        }>
-        ⌨
-      </button>
-    </div>
+          <button
+            onClick={openInput.bind(this.false, this.false)}
+            className={
+              'sm:hidden text-5xl bg-green text-white rounded-full shadow-lg w-16 h-16'
+            }>
+            ⌨
+          </button>
+        </div>
+      )}
+    </>
   );
 };

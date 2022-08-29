@@ -1,5 +1,4 @@
 import * as React from 'react';
-import marked from 'marked';
 import { TaskItemDisplay } from './TaskItemDisplay';
 import { RowType, taskAsString } from '../helpers/utils';
 
