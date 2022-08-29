@@ -267,7 +267,11 @@ export const InputBox = props => {
         // For special commands, insert the space afterward
         const specialCommands = 'bcdea';
         const taskId = commonStore.getItem('focusingTask');
-        if (specialCommands.indexOf(c) !== -1) c += ' ' + taskId;
+        if (specialCommands.indexOf(c) !== -1) {
+          c += ' ' + taskId;
+        } else {
+          c = '';
+        }
         openInput(event.shiftKey, false, c);
       }
     }
@@ -463,7 +467,9 @@ export const InputBox = props => {
             className={
               'hidden sm:block bg-white px-3 py-2 rounded-lg shadow-lg'
             }>
-            Type anything, or press <code>/</code> to search.
+            Type anything, or press <code>/</code> to search. <br />
+            Tab to select Task <br />→ <code>Alt + Arrow Up/Down</code> to move
+            task
           </span>
           <button
             onClick={openInput.bind(this.false, this.false)}

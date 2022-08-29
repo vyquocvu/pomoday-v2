@@ -21,6 +21,7 @@ import { pullFromDB, pushToDB } from '../helpers/api';
 import { StatusBar } from './StatusBar';
 import { QuickHelp } from './QuickHelp';
 import { useEventListener, useInterval } from '../helpers/hooks';
+import handleFocus from '../helpers/useFocus';
 import { Settings } from './Settings';
 import { commonStore } from '../anyState';
 
@@ -174,7 +175,6 @@ const syncTasks = async (state, setState, isPull) => {
 
 export const App = () => {
   const [state, setState] = React.useState(getInitialState());
-  const [isHoldingAlt, setIsHoldingAlt] = React.useState(false);
   const mainViewRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -290,27 +290,41 @@ export const App = () => {
     );
   };
 
-  const handleReorder = (taskId, direction) => {
+  const swapTask = (taskId, dir) => {
     if (!taskId) return;
-    state.tasks.forEach((t, i) => {
-      if (t.id === Number(taskId)) {
-        console.log(i, direction);
-        const newIndex = i + direction;
-        if (newIndex >= 0 && newIndex < state.tasks.length) {
-          const newTask = state.tasks[newIndex];
-          state.tasks[newIndex] = t;
-          state.tasks[i] = newTask;
+    let targetId = 0;
+    for (var group in taskGroups.display) {
+      if (targetId) break;
+      const currentGroup = taskGroups.display[group];
+      currentGroup.forEach((t, i) => {
+        if (targetId) return;
+        if (t.id === taskId) {
+          targetId = currentGroup[i + dir] ? currentGroup[i + dir].id : 0;
         }
+      });
+    }
+    if (targetId && taskId) {
+      const tasks = [...state.tasks];
+      const target = tasks.find(t => t.id === targetId);
+      const current = tasks.find(t => t.id === taskId);
+      if (target && current) {
+        current.id = targetId;
+        target.id = taskId;
+        setState({
+          ...state,
+          tasks,
+        });
       }
-    });
-    setState({ ...state, tasks: state.tasks });
+      handleFocus(targetId);
+    }
   };
 
   const processHotKey = e => {
     if (mainViewRef && mainViewRef.current) {
       if (!document.activeElement.tagName.match(/(body)|A/i)) return;
       if (e.key === 'Alt') {
-        setIsHoldingAlt(true);
+        commonStore.setItem('isHoldingAlt', true);
+        return;
       }
       if (
         state.showSettings ||
@@ -321,6 +335,8 @@ export const App = () => {
         return;
 
       const taskId = commonStore.getItem('focusingTask');
+      const isHoldingAlt = commonStore.getItem('isHoldingAlt');
+
       switch (e.key) {
         case 'Escape':
           if (state.filterBy) {
@@ -333,7 +349,7 @@ export const App = () => {
         case 'j':
         case 'ArrowDown':
           if (taskId && isHoldingAlt) {
-            handleReorder(taskId, 1);
+            swapTask(taskId, 1);
             e.preventDefault();
           } else {
             mainViewRef.current.scroll(0, mainViewRef.current.scrollTop + 100);
@@ -342,7 +358,7 @@ export const App = () => {
         case 'k':
         case 'ArrowUp':
           if (taskId && isHoldingAlt) {
-            handleReorder(taskId, -1);
+            swapTask(taskId, -1);
             e.preventDefault();
           } else {
             mainViewRef.current.scroll(0, mainViewRef.current.scrollTop - 100);
@@ -356,10 +372,10 @@ export const App = () => {
 
   useEventListener('keydown', processHotKey);
   useEventListener('keyup', e => {
-    if (e.key === 'Alt') setIsHoldingAlt(false);
+    if (e.key === 'Alt') commonStore.setItem('isHoldingAlt', false);
   });
 
-  console.log('re-render', state.tasks.map(t => t.id).join(','));
+  console.log('taskGroups', taskGroups);
 
   return (
     <StateContext.Provider value={[state, setState]}>

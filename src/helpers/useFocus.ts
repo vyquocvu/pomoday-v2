@@ -1,7 +1,7 @@
 import { commonStore } from '../anyState';
 
-const handelFocus = id => {
-  return commonStore.setItem('focusingTask', id ? String(id) : '');
+const handleFocus = id => {
+  return commonStore.setItem('focusingTask', id ? id : 0);
 };
 
-export default handelFocus;
+export default handleFocus;
